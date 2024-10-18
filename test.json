@@ -1,0 +1,292 @@
+{
+    "id": "frontend-checkout-shopping-cart",
+    "name": "Frontend: Checking out shopping cart",
+    "description": "Simulate user checking out shopping cart",
+    "version": 10,
+    "createdAt": "2024-08-07T16:05:04.251114Z",
+    "trigger": {
+        "type": "http",
+        "httpRequest": {
+            "url": "http://${var:FRONTEND_ADDR}/api/checkout",
+            "method": "POST",
+            "headers": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "body": "{\n  \"userId\": \"2491f868-88f1-4345-8836-d5d8511a9f83\",\n  \"email\": \"someone@example.com\",\n  \"address\": {\n    \"streetAddress\": \"1600 Amphitheatre Parkway\",\n    \"state\": \"CA\",\n    \"country\": \"United States\",\n    \"city\": \"Mountain View\",\n    \"zipCode\": \"94043\"\n  },\n  \"userCurrency\": \"USD\",\n  \"creditCard\": {\n    \"creditCardCvv\": 672,\n    \"creditCardExpirationMonth\": 1,\n    \"creditCardExpirationYear\": 2030,\n    \"creditCardNumber\": \"4432-8015-6152-0454\"\n  }\n}\n",
+            "auth": {
+                "apiKey": {},
+                "basic": {},
+                "bearer": {}
+            }
+        },
+        "grpc": {
+            "auth": {
+                "apiKey": {},
+                "basic": {},
+                "bearer": {}
+            }
+        },
+        "traceid": {},
+        "kafka": {
+            "authentication": {
+                "plain": {}
+            }
+        },
+        "playwrightEngine": {},
+        "graphql": {
+            "auth": {
+                "apiKey": {},
+                "basic": {},
+                "bearer": {}
+            },
+            "body": {}
+        }
+    },
+    "specs": [
+        {
+            "name": "It called the frontend with success",
+            "selector": "span[tracetest.span.type=\"general\" name=\"Tracetest trigger\"]",
+            "selectorParsed": {
+                "query": "span[tracetest.span.type=\"general\" name=\"Tracetest trigger\"]",
+                "structure": [
+                    {
+                        "filters": [
+                            {
+                                "property": "tracetest.span.type",
+                                "operator": "=",
+                                "value": "general"
+                            },
+                            {
+                                "property": "name",
+                                "operator": "=",
+                                "value": "Tracetest trigger"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "assertions": [
+                "attr:tracetest.response.status = 200"
+            ]
+        },
+        {
+            "name": "The order was placed",
+            "selector": "span[tracetest.span.type=\"rpc\" name=\"oteldemo.CheckoutService/PlaceOrder\" rpc.system=\"grpc\" rpc.method=\"PlaceOrder\" rpc.service=\"oteldemo.CheckoutService\"]",
+            "selectorParsed": {
+                "query": "span[tracetest.span.type=\"rpc\" name=\"oteldemo.CheckoutService/PlaceOrder\" rpc.system=\"grpc\" rpc.method=\"PlaceOrder\" rpc.service=\"oteldemo.CheckoutService\"]",
+                "structure": [
+                    {
+                        "filters": [
+                            {
+                                "property": "tracetest.span.type",
+                                "operator": "=",
+                                "value": "rpc"
+                            },
+                            {
+                                "property": "name",
+                                "operator": "=",
+                                "value": "oteldemo.CheckoutService/PlaceOrder"
+                            },
+                            {
+                                "property": "rpc.system",
+                                "operator": "=",
+                                "value": "grpc"
+                            },
+                            {
+                                "property": "rpc.method",
+                                "operator": "=",
+                                "value": "PlaceOrder"
+                            },
+                            {
+                                "property": "rpc.service",
+                                "operator": "=",
+                                "value": "oteldemo.CheckoutService"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "assertions": [
+                "attr:app.user.id = \"2491f868-88f1-4345-8836-d5d8511a9f83\"",
+                "attr:app.order.items.count = 1"
+            ]
+        },
+        {
+            "name": "The user was charged",
+            "selector": "span[tracetest.span.type=\"rpc\" name=\"oteldemo.PaymentService/Charge\" rpc.system=\"grpc\" rpc.method=\"Charge\" rpc.service=\"oteldemo.PaymentService\"]",
+            "selectorParsed": {
+                "query": "span[tracetest.span.type=\"rpc\" name=\"oteldemo.PaymentService/Charge\" rpc.system=\"grpc\" rpc.method=\"Charge\" rpc.service=\"oteldemo.PaymentService\"]",
+                "structure": [
+                    {
+                        "filters": [
+                            {
+                                "property": "tracetest.span.type",
+                                "operator": "=",
+                                "value": "rpc"
+                            },
+                            {
+                                "property": "name",
+                                "operator": "=",
+                                "value": "oteldemo.PaymentService/Charge"
+                            },
+                            {
+                                "property": "rpc.system",
+                                "operator": "=",
+                                "value": "grpc"
+                            },
+                            {
+                                "property": "rpc.method",
+                                "operator": "=",
+                                "value": "Charge"
+                            },
+                            {
+                                "property": "rpc.service",
+                                "operator": "=",
+                                "value": "oteldemo.PaymentService"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "assertions": [
+                "attr:rpc.grpc.status_code  =  0",
+                "attr:tracetest.selected_spans.count \u003e= 1"
+            ]
+        },
+        {
+            "name": "The product was shipped",
+            "selector": "span[tracetest.span.type=\"rpc\" name=\"oteldemo.ShippingService/ShipOrder\" rpc.system=\"grpc\" rpc.method=\"ShipOrder\" rpc.service=\"oteldemo.ShippingService\"]",
+            "selectorParsed": {
+                "query": "span[tracetest.span.type=\"rpc\" name=\"oteldemo.ShippingService/ShipOrder\" rpc.system=\"grpc\" rpc.method=\"ShipOrder\" rpc.service=\"oteldemo.ShippingService\"]",
+                "structure": [
+                    {
+                        "filters": [
+                            {
+                                "property": "tracetest.span.type",
+                                "operator": "=",
+                                "value": "rpc"
+                            },
+                            {
+                                "property": "name",
+                                "operator": "=",
+                                "value": "oteldemo.ShippingService/ShipOrder"
+                            },
+                            {
+                                "property": "rpc.system",
+                                "operator": "=",
+                                "value": "grpc"
+                            },
+                            {
+                                "property": "rpc.method",
+                                "operator": "=",
+                                "value": "ShipOrder"
+                            },
+                            {
+                                "property": "rpc.service",
+                                "operator": "=",
+                                "value": "oteldemo.ShippingService"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "assertions": [
+                "attr:rpc.grpc.status_code = 0",
+                "attr:tracetest.selected_spans.count \u003e= 1"
+            ]
+        },
+        {
+            "name": "The cart was emptied",
+            "selector": "span[tracetest.span.type=\"rpc\" name=\"oteldemo.CartService/EmptyCart\" rpc.system=\"grpc\" rpc.method=\"EmptyCart\" rpc.service=\"oteldemo.CartService\"]",
+            "selectorParsed": {
+                "query": "span[tracetest.span.type=\"rpc\" name=\"oteldemo.CartService/EmptyCart\" rpc.system=\"grpc\" rpc.method=\"EmptyCart\" rpc.service=\"oteldemo.CartService\"]",
+                "structure": [
+                    {
+                        "filters": [
+                            {
+                                "property": "tracetest.span.type",
+                                "operator": "=",
+                                "value": "rpc"
+                            },
+                            {
+                                "property": "name",
+                                "operator": "=",
+                                "value": "oteldemo.CartService/EmptyCart"
+                            },
+                            {
+                                "property": "rpc.system",
+                                "operator": "=",
+                                "value": "grpc"
+                            },
+                            {
+                                "property": "rpc.method",
+                                "operator": "=",
+                                "value": "EmptyCart"
+                            },
+                            {
+                                "property": "rpc.service",
+                                "operator": "=",
+                                "value": "oteldemo.CartService"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "assertions": [
+                "attr:rpc.grpc.status_code = 0",
+                "attr:tracetest.selected_spans.count \u003e= 1"
+            ]
+        },
+        {
+            "name": "The order was sent to be processed asyncronously",
+            "selector": "span[tracetest.span.type=\"messaging\" name=\"orders publish\" messaging.system=\"kafka\" messaging.destination.name=\"orders\" messaging.operation=\"publish\"]",
+            "selectorParsed": {
+                "query": "span[tracetest.span.type=\"messaging\" name=\"orders publish\" messaging.system=\"kafka\" messaging.destination.name=\"orders\" messaging.operation=\"publish\"]",
+                "structure": [
+                    {
+                        "filters": [
+                            {
+                                "property": "tracetest.span.type",
+                                "operator": "=",
+                                "value": "messaging"
+                            },
+                            {
+                                "property": "name",
+                                "operator": "=",
+                                "value": "orders publish"
+                            },
+                            {
+                                "property": "messaging.system",
+                                "operator": "=",
+                                "value": "kafka"
+                            },
+                            {
+                                "property": "messaging.destination.name",
+                                "operator": "=",
+                                "value": "orders"
+                            },
+                            {
+                                "property": "messaging.operation",
+                                "operator": "=",
+                                "value": "publish"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "assertions": [
+                "attr:messaging.destination.name = \"orders\""
+            ]
+        }
+    ],
+    "summary": {
+        "runs": 3392,
+        "lastRun": {
+            "time": "2024-10-18T14:06:42.273752Z",
+            "passes": 10
+        }
+    }
+}
