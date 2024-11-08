@@ -2,6 +2,8 @@
 
 This project has the purpose of showing how to use the RAG model to generate answers for questions based on a given [OpenTelemetry](https://opentelemetry.io/) [Trace](https://opentelemetry.io/docs/concepts/signals/traces/).
 
+The chatbot was inspired by [Streamlit Chatbot example](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py).
+
 To do that I'm splitting the project into two main parts:
 
 - **Creating a Vector Store**: This part of the project is responsible for creating a vector store based on the trace data. To do that we preprocess the trace data to extract the necessary information and then we use the RAG model to generate the vectors for each trace span. The output of this part is a vector store that can be used to generate answers for questions based on the trace data.
