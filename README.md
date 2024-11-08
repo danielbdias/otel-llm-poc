@@ -10,10 +10,13 @@ To do that I'm splitting the project into two main parts:
 
 - **Running the Chatbot**: This part of the project is responsible for running a chatbot that can answer questions based on the trace data. To do that we use the vector store created in the first part of the project to generate answers for the questions.
 
-Here is a short video showing how the chatbot works:
-<div style="position: relative; padding-bottom: 56.36743215031315%; height: 0;">
-  <iframe src="https://www.loom.com/embed/6570154088a942268a30c60dee9dec96?sid=0203203c-dff1-442e-bd38-0b3ceea42c9a" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-  </iframe>
+<div>
+  <a href="https://www.loom.com/share/6570154088a942268a30c60dee9dec96">
+    <p>Access here a short video showing how the chatbot works:</p>
+  </a>
+  <a href="https://www.loom.com/share/6570154088a942268a30c60dee9dec96">
+    <img style="max-width:500px;" src="https://cdn.loom.com/sessions/thumbnails/6570154088a942268a30c60dee9dec96-11ba941557605b2a-full-play.gif">
+  </a>
 </div>
 
 ### Setting up the project
