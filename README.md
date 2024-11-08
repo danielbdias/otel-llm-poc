@@ -44,8 +44,8 @@ To create the VectorStore and run the chatbot you can use the following commands
 
 ```sh
   # create vector store
-  make run/create-vector-store
+  python ./app/create_vector_store.py --trace-file=$PWD/data/trace.json --preprocessed-trace-file=$PWD/data/trace-description.txt
 
   # run chatbot
-  make run/chatbot
+  streamlit run ./app/streamlit_app.py
 ```
