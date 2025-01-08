@@ -7,7 +7,7 @@ from langchain_core.documents import Document
 
 import config as app_config
 
-def save_vector_store(config : app_config.Config, documents : List[Document]):
+def save_vector_store(trace_id : str, config : app_config.Config, documents : List[Document]):
   """
   Creates a vector store based in a list of documents and saves it to disk.
 
@@ -21,9 +21,10 @@ def save_vector_store(config : app_config.Config, documents : List[Document]):
   vectorstore = FAISS.from_documents(documents, embeddings)
 
   # Store vector store in disk
-  vectorstore.save_local(config.vector_store_dir, index_name=config.vector_store_index)
+  index_name = f"{trace_id}-{config.vector_store_index}"
+  vectorstore.save_local(config.vector_store_dir, index_name=index_name)
 
-def load_vector_store(config : app_config.Config) -> FAISS:
+def load_vector_store(trace_id : str, config : app_config.Config) -> FAISS:
   """
   Loads a vector store from disk.
 
@@ -34,5 +35,6 @@ def load_vector_store(config : app_config.Config) -> FAISS:
   """
 
   # Load vector store from disk
+  index_name = f"{trace_id}-{config.vector_store_index}"
   embeddings = OpenAIEmbeddings(api_key=config.openai_api_key)
-  return FAISS.load_local(config.vector_store_dir, embeddings, index_name=config.vector_store_index, allow_dangerous_deserialization=True)
+  return FAISS.load_local(config.vector_store_dir, embeddings, index_name=index_name, allow_dangerous_deserialization=True)

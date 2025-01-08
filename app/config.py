@@ -14,6 +14,7 @@ class Config:
   vector_store_chunk_overlap: int = 200
   vector_store_dir: str = "./data"
   vector_store_index: str = "vectorstore"
+  jaeger_api_url: str = "http://localhost:8080/jaeger/ui"
 
 def get_config() -> Config:
   api_key = os.getenv("OPENAI_API_KEY", "")

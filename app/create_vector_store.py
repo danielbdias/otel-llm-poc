@@ -3,14 +3,16 @@ from typing import List
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
-import argparse
 import json
+import os
 import time
 
-import config as app_config
-from rag.vectorstore import save_vector_store
+import requests
+from urllib.parse import quote
 
-config = app_config.get_config()
+import config as app_config
+
+from rag.vectorstore import save_vector_store
 
 def replace_t_with_space(list_of_documents : List[Document]) -> List[Document]:
   """
@@ -28,12 +30,12 @@ def replace_t_with_space(list_of_documents : List[Document]) -> List[Document]:
 
   return list_of_documents
 
-def encode_textfile_into_vector_store(path : str, config: app_config.Config):
+def encode_textfile_into_vector_store(trace_id : str, tracefile_path : str, config: app_config.Config):
     """
     Encodes a text file into a vector store using OpenAI embeddings.
 
     Args:
-        path: The path to the text file.
+        tracefile_path: The path to the trace text file.
         output_file: The path where the vector store will be stored.
         chunk_size: The desired size of each text chunk.
         chunk_overlap: The amount of overlap between consecutive chunks.
@@ -42,7 +44,7 @@ def encode_textfile_into_vector_store(path : str, config: app_config.Config):
     text = ''
 
     # Load JSON file
-    with open(path, 'r') as file:
+    with open(tracefile_path, 'r') as file:
         text = file.read()
 
     document = Document(
@@ -60,85 +62,116 @@ def encode_textfile_into_vector_store(path : str, config: app_config.Config):
     chunks = text_splitter.split_documents([document])
     cleaned_chunks = replace_t_with_space(chunks)
 
-    save_vector_store(config, cleaned_chunks)
+    save_vector_store(trace_id, config, cleaned_chunks)
 
-def convert_node_data_to_text(node_data) -> str:
-  """
-    Converts a node data (trace span) object to a natural language description.
+def convert_trace_span_to_natural_language_text(trace_span) -> str:
+  span_id = trace_span['spanID']
+  operation_name = trace_span['operationName']
+  duration = trace_span['duration']
+  process_id = trace_span['processID']
 
-    Args:
-        node_data: Dictionary containing the node data (trace span).
-
-    Returns:
-        A string describing the node data in natural language.
-  """
+  if len(trace_span['references']) > 0:
+    parent_id = trace_span['references'][0]['spanID']
+  else:
+    parent_id = None
 
   description = [
-    f"The node is named as '{node_data['name']}'",
-    f"it has an id '{node_data['id']}'",
-    f"it has a '{node_data['kind']}' kind",
-    f"it has a duration of {node_data['attributes']['tracetest.span.duration']}",
+    f"The span is named as '{operation_name}'",
+    f"it has an id '{span_id}'",
+    f"it has a duration of {duration}",
+    f"it has a process id '{process_id}'",
   ]
 
-  if 'parent_id' in node_data:
-    description.append(f"it has a parent id '{node_data['parentId']}'")
+  if parent_id is not None:
+    description.append(f"it has a parent id '{parent_id}'")
 
-  if 'tracetest.span.type' in node_data['attributes']:
-    description.append(f"it has a '{node_data['attributes']['tracetest.span.type']}' span type")
+  if len(trace_span['tags']) > 0:
+    for tag in trace_span['tags']:
+      description.append(f"it has a tag '{tag['key']} with value '{tag['value']}'")
 
   return ', '.join(description)
 
-def preprocess_trace_file(trace_file : str, preprocessed_trace_file : str):
-  """
-    Preprocesses a Tracetest trace file into a file containing each node (span) described in natural language description.
+def convert_trace_process_to_natural_language_text(process_id : str, trace_process) -> str:
+  service_name = trace_process['serviceName']
 
-    Args:
-        trace_file: Path to the trace JSON file.
-        preprocessed_trace_file: Path where the preprocessed trace descripted in natural language will be stored.
-  """
+  description = [
+    f"The process is named as '{service_name}'",
+    f"it has an id '{process_id}'",
+  ]
+
+  if len(trace_process['tags']) > 0:
+    for tag in trace_process['tags']:
+      description.append(f"it has a tag '{tag['key']} with value '{tag['value']}'")
+
+  return ', '.join(description)
+
+def preprocess_trace_file(trace_id : str, trace_file : str, config: app_config.Config):
+  preprocessed_trace_file = f"{config.vector_store_dir}/{trace_id}-preprocessed.txt"
+
   # Load Tracetest Trace file
   trace_data = None
   with open(trace_file, 'r') as file:
     trace_data = json.load(file)
 
-  flat_representation = trace_data["flat"]
+  single_trace = trace_data[0]
+  trace_spans = single_trace["spans"]
+  trace_processes = single_trace["processes"]
 
   # Process each node and write it to the preprocessed trace file
   with open(preprocessed_trace_file, 'w') as file:
-    for node_id in flat_representation.keys():
-      file.write(convert_node_data_to_text(flat_representation[node_id]))
+    for span in trace_spans:
+      file.write(convert_trace_span_to_natural_language_text(span))
       file.write('\n')
 
-##################################################################
-# Script start
-##################################################################
+    for process_id, process in trace_processes.items():
+      file.write(convert_trace_process_to_natural_language_text(process_id, process))
+      file.write('\n')
 
-parser = argparse.ArgumentParser(description='Process Tracetest trace data in JSON and store it as a LangChain VectorStore.')
+  return preprocessed_trace_file
 
-parser.add_argument('--trace-file', type=str, required=True, help='Path to the trace JSON file')
-parser.add_argument('--preprocessed-trace-file', type=str, required=True, help='Path where the preprocessed trace descripted in natural language will be stored')
+def query_trace(trace_id : str, config: app_config.Config):
+  # query Jaeger API to get trace data
+# Construct the URL for Jaeger's HTTP API
+    encoded_trace_id = quote(trace_id)
+    url = f"{config.jaeger_api_url}/api/traces/{encoded_trace_id}"
 
-args = parser.parse_args()
-trace_file = args.trace_file
-preprocessed_trace_file = args.preprocessed_trace_file
+    try:
+        # Make the HTTP request
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an exception for bad status codes
 
-start_time = time.time()
+        jaeger_data = response.json()
 
-print('Starting process...\n')
+        if not jaeger_data.get('data') or not jaeger_data['data']:
+            raise Exception(f"Trace {trace_id} not found")
 
-print('Preprocessing trace file...')
+        # Save trace data to file
+        output_file = f"{config.vector_store_dir}/{trace_id}.json"
+        with open(output_file, 'w') as f:
+            json.dump(jaeger_data['data'], f)
 
-# Step 1: Preprocess the trace file
-preprocess_trace_file(trace_file, preprocessed_trace_file)
+        return output_file
 
-print('Done!\n\n')
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to query Jaeger: {str(e)}")
 
-print('Encoding preprocessed trace file into vector store...')
+def process_trace(trace_id : str, config: app_config.Config):
+  start_time = time.time()
 
-# Step 2: Encode the preprocessed trace file into OpenAI embeddings and store in a vector store in disk
-encode_textfile_into_vector_store(preprocessed_trace_file, config)
+  # Just to avoid calling OpenAI API if the trace file already exists
+  preexistent_trace_file = f"{config.vector_store_dir}/{trace_id}.json"
+  if os.path.exists(preexistent_trace_file):
+    return 0
 
-print('Done!\n\n')
+  # Generate trace file
+  trace_file = query_trace(trace_id, config)
 
-elapsed_time = time.time() - start_time
-print(f'Elapsed time: {elapsed_time} seconds')
+  # Preprocess trace file
+  preprocessed_trace_file = preprocess_trace_file(trace_id, trace_file, config)
+
+  # Encode the preprocessed trace file into OpenAI embeddings and store in a vector store in disk
+  encode_textfile_into_vector_store(trace_id, preprocessed_trace_file, config)
+
+  elapsed_time = time.time() - start_time
+
+  return elapsed_time
