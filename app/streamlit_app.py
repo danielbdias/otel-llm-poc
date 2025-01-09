@@ -7,8 +7,7 @@ import streamlit as st
 from rag.retrieval import retrieve_context_per_question, answer_question
 from rag.vectorstore import load_vector_store
 from create_vector_store import process_trace
-# chunks_vector_store = load_vector_store(config)
-# chunks_query_retriever = chunks_vector_store.as_retriever(search_kwargs={"k": 2})
+
 
 ############################
 # UI App start
@@ -48,19 +47,20 @@ if "trace_id" not in st.session_state.keys():
     elapsed_time = process_trace(st.session_state.trace_id, config)
     st.session_state.messages.append({"role": "assistant", "content": f"Trace added to the Vector Store in {elapsed_time} seconds"})
     st.session_state.messages.append({"role": "assistant", "content": "What do you want to know about this Trace?"})
+
+    chunks_vector_store = load_vector_store(st.session_state.trace_id, config)
+    st.session_state.chunks_query_retriever = chunks_vector_store.as_retriever(search_kwargs={"k": 2})
 else:
   if prompt := st.chat_input("Ask me anything about the Trace"):
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-# If last message is not from assistant, generate a new response
-# if st.session_state.messages[-1]["role"] != "assistant":
-#   with st.chat_message("assistant"):
-#     chunks_query_retriever = None
-#     context = retrieve_context_per_question(prompt, chunks_query_retriever)
-#
-#     answer = answer_question(config, prompt, context)
-#     st.write(answer)
-#
-#     message = {"role": "assistant", "content": answer}
-#     # Add response to message history
-#     st.session_state.messages.append(message)
+    # If last message is not from assistant, generate a new response
+    if st.session_state.messages[-1]["role"] != "assistant":
+      with st.chat_message("assistant"):
+        context = retrieve_context_per_question(prompt, st.session_state.chunks_query_retriever)
+        answer = answer_question(config, prompt, context)
+        st.write(answer)
+        message = {"role": "assistant", "content": answer}
+
+        # Add response to message history
+        st.session_state.messages.append(message)
