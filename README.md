@@ -4,21 +4,6 @@ This project has the purpose of showing how to use the RAG model to generate ans
 
 The chatbot was inspired by [Streamlit Chatbot example](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py).
 
-To do that I'm splitting the project into two main parts:
-
-- **Creating a Vector Store**: This part of the project is responsible for creating a vector store based on the trace data. To do that we preprocess the trace data to extract the necessary information and then we use the RAG model to generate the vectors for each trace span. The output of this part is a vector store that can be used to generate answers for questions based on the trace data.
-
-- **Running the Chatbot**: This part of the project is responsible for running a chatbot that can answer questions based on the trace data. To do that we use the vector store created in the first part of the project to generate answers for the questions.
-
-<div>
-  <a href="https://www.loom.com/share/6570154088a942268a30c60dee9dec96">
-    <p>Access here a short video showing how the chatbot works:</p>
-  </a>
-  <a href="https://www.loom.com/share/6570154088a942268a30c60dee9dec96">
-    <img style="max-width:500px;" src="https://cdn.loom.com/sessions/thumbnails/6570154088a942268a30c60dee9dec96-11ba941557605b2a-full-play.gif">
-  </a>
-</div>
-
 ### Setting up the project
 
 First of all, you need to have an OpenAI API Key to use the project, you can get one [here](https://platform.openai.com/signup).
